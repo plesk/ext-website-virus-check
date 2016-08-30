@@ -127,6 +127,11 @@ class IndexController extends pm_Controller_Action
             ],
         ]);
 
+        $form->addElement('checkbox', 'emailNotificationEnabled', [
+            'label' => $this->lmsg('emailNotificationEnabled'),
+            'value' => pm_Settings::get('emailNotificationEnabled'),
+        ]);
+
         $form->addElement('checkbox', '_promo_admin_home', [
             'label' => $this->lmsg('adminHomeWidgetEnabled'),
             'value' => pm_Settings::get('_promo_admin_home'),
@@ -141,6 +146,7 @@ class IndexController extends pm_Controller_Action
             pm_Settings::set('apiKeyBecameInvalid', '');
             pm_Settings::set('virustotal_enabled', $form->getValue('virustotal_enabled'));
             pm_Settings::set('virustotal_api_key', $form->getValue('virustotal_api_key'));
+            pm_Settings::set('emailNotificationEnabled', $form->getValue('emailNotificationEnabled'));
             pm_Settings::set('_promo_admin_home', $form->getValue('_promo_admin_home'));
             
             $this->_status->addMessage('info', $this->lmsg('settingsWasSuccessfullySaved'));

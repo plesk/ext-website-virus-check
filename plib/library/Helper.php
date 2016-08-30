@@ -233,7 +233,13 @@ class Modules_WebsiteVirusCheck_Helper
         $report['virustotal_total'] = isset($new_report['total']) ? (int)$new_report['total'] : '';
         $report['virustotal_scan_date'] = isset($new_report['scan_date']) ? $new_report['scan_date'] : '';
 
+        if ($report['virustotal_positives'] != '' && (int)$report['virustotal_positives'] > 0) {
+            self::sendNotification($domain);
+        }
+
         pm_Settings::set('domain_id_' . $domain->id, json_encode($report));
+
+        return;
     }
 
     /**
@@ -402,5 +408,37 @@ class Modules_WebsiteVirusCheck_Helper
             'valid' => false,
             'http_code' => $response->getStatus(),
         ];
+    }
+
+    /** Send notification to admin
+     * @param $domain Modules_WebsiteVirusCheck_PleskDomain
+     * @return null
+     */
+    public static function sendNotification($domain)
+    {
+        if (!pm_Settings::get('emailNotificationEnabled')) {
+            return;
+        }
+
+        $admin = pm_Client::getByLogin('admin');
+        $adminEmail = $admin->getProperty('email');
+        $cnameEmail = $admin->getProperty('cname');
+
+        $mail = new Zend_Mail();
+        $mail->setBodyText(
+            pm_Locale::lmsg(
+                'emailNotificationBodyBadDomain',
+                [
+                    'domain' => $domain->ascii_name,
+                    'url' => sprintf(self::virustotal_domain_info_url, $domain->ascii_name)
+                ]
+            )
+        );
+        $mail->setFrom($adminEmail, $cnameEmail);
+        $mail->addTo($adminEmail, $cnameEmail);
+        $mail->setSubject(pm_Locale::lmsg('emailNotificationSubjectBadDomain', ['domain' => $domain->ascii_name]));
+        $mail->send();
+
+        return;
     }
 }
