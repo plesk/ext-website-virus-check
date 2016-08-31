@@ -44,7 +44,9 @@ $messages = array(
     'about' => 'This extension uses the public API of <a rel="noopener noreferrer" target=\'_blank\' href=\'https://virustotal.com/\'>VirusTotal</a> to detect malicious scripts on your websites. API requests are executed using daily scheduled tasks at <a href="/admin/scheduler/tasks-list">Scheduled Tasks</a>',
     'feedback' => 'If you have any questions or concerns about this extension, please feel free to submit issue in extension repository on <a rel="noopener noreferrer" target="_blank" href="https://github.com/plesk/ext-website-virus-check">GitHub</a>',
     'faq' => 'FAQ',
-    'question1' => '<p><b>Q: Why there are no e-mail notifications?</b><br />A: We have no way of knowing that e-mails will reach your inbox.</p>',
     'question2' => '<p><b>Q: Why daily scheduled tasks take so long to execute?</b><br />A: Because of the limitations of the public API the extension sends the API requests at the speed of 3 domains per minute.</p>',
     'question3' => '<p><b>Q: Can I execute daily scheduled task several times in a one day?</b><br />A: Yes, you can.</p>',
+    'emailNotificationEnabled' => 'Enable email notifications',
+    'emailNotificationSubjectBadDomain' => 'VirusTotal.com reports "bad" domain %%domain%%',
+    'emailNotificationBodyBadDomain' => 'VirusTotal.com reports domain %%domain%% as "bad" %%url%%',
 );

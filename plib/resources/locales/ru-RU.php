@@ -44,7 +44,9 @@ $messages = array(
     'about' => 'Это расширение использует публичное API <a rel="noopener noreferrer" target=\'_blank\' href=\'https://virustotal.com/\'>VirusTotal</a>, чтобы проверить Ваши сайты на вредоносные скрипты. Запросы выполняются через ежедневную задачу, которую Вы можете найти в <a href="/admin/scheduler/tasks-list">Scheduled Tasks</a>',
     'feedback' => 'В случае каких-либо проблем с расширением Вы можете создать issue в репозитории на <a rel="noopener noreferrer" target="_blank" href="https://github.com/plesk/ext-website-virus-check">GitHub</a>',
     'faq' => 'FAQ',
-    'question1' => '<p><b>Q: Почему нет нотификации по e-mail?</b><br />A: Нет никаких гарантий, что сообщение электронной почты попадет к Вам в ящик.</p>',
     'question2' => '<p><b>Q: Почему ежедневная задача выполняется так долго?</b><br />A: Из-за ограничений публичного API расширение отправляет API запросы со скоростью 3 домена в минуту.</p>',
     'question3' => '<p><b>Q: Можно ли выполнять ежедневную задачу несколько раз в один день?</b><br />A: Да, можно.</p>',
+    'emailNotificationEnabled' => 'Включить почтовые оповещения',
+    'emailNotificationSubjectBadDomain' => 'От VirusTotal.com получен "плохой" отчет для домена %%domain%%',
+    'emailNotificationBodyBadDomain' => '"Плохой" отчет VirusTotal.com для домена %%domain%% %%url%%',
 );
