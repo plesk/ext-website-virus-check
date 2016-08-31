@@ -419,6 +419,12 @@ class Modules_WebsiteVirusCheck_Helper
         if (!pm_Settings::get('emailNotificationEnabled')) {
             return;
         }
+        $today = date('d/M/Y');
+        if (pm_Settings::get('notified_id_' . $domain->id) === $today) {
+            return;
+        }
+
+        pm_Settings::set('notified_id_' . $domain->id, date('d/M/Y'));
 
         $admin = pm_Client::getByLogin('admin');
         $adminEmail = $admin->getProperty('email');
