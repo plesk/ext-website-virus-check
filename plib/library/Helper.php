@@ -70,7 +70,7 @@ class Modules_WebsiteVirusCheck_Helper
             
             $request = self::virustotal_scan_url_request($domain->ascii_name);
             if (empty($request)) {
-                pm_Log::debug('Empty request ' . print_r($request, 1));
+                pm_Log::debug('Empty request for ' . $domain->ascii_name . ' : ' . print_r($request, 1));
                 pm_Settings::set('scan_lock', 0);
                 return;
             }
@@ -181,6 +181,7 @@ class Modules_WebsiteVirusCheck_Helper
             pm_Log::debug(print_r($report, 1));
 
             if (empty($report)) {
+                pm_Log::debug('Empty report for ' . $domain->ascii_name);
                 return;
             }
 
@@ -243,6 +244,29 @@ class Modules_WebsiteVirusCheck_Helper
     }
 
     /**
+     * @param $client Zend_Http_Client
+     * @return Zend_Http_Response|false
+     */
+    static function send_http_request(Zend_Http_Client $client) {
+        $response = false;
+
+        for ($try = 5; $try > 0; $try--) {
+            pm_Log::debug('Try to connect ' . self::virustotal_scan_url);
+            try {
+                $response = $client->request(Zend_Http_Client::POST);
+                pm_Log::debug('Successfully connected to ' . self::virustotal_scan_url);
+                break;
+            } catch (Zend_Http_Client_Adapter_Exception $e) {
+                pm_Log::debug('Failed connect to ' . self::virustotal_scan_url);
+                pm_Log::err($e);
+                sleep(5);
+            }
+        }
+
+        return $response;
+    }
+
+    /**
      * @param $url string
      * @return array
      */
@@ -253,8 +277,12 @@ class Modules_WebsiteVirusCheck_Helper
         $client->setParameterPost('url', $url);
         $client->setParameterPost('apikey', pm_Settings::get('virustotal_api_key'));
         sleep(self::virustotal_api_timeout);
-        $response = $client->request(Zend_Http_Client::POST);
-        
+
+        $response = self::send_http_request($client);
+        if ($response === false) {
+            return array();
+        }
+
         if ($response->getStatus() == 403) {
             pm_Settings::set('apiKeyBecameInvalid', '1');    
         }
@@ -274,8 +302,13 @@ class Modules_WebsiteVirusCheck_Helper
 
         $client->setParameterPost('resource', $url);
         $client->setParameterPost('apikey', pm_Settings::get('virustotal_api_key'));
+
         sleep(self::virustotal_api_timeout);
-        $response = $client->request(Zend_Http_Client::POST);
+
+        $response = self::send_http_request($client);
+        if ($response === false) {
+            return array();
+        }
 
         if ($response->getStatus() == 403) {
             pm_Settings::set('apiKeyBecameInvalid', '1');
@@ -410,6 +443,23 @@ class Modules_WebsiteVirusCheck_Helper
         ];
     }
 
+    /**
+     * @param $mail Zend_Mail
+     * @return Zend_Mail|false
+     */
+    static function sendMailRequest($mail)
+    {
+        $response = false;
+        try {
+            $mail->send();
+        } catch (Zend_Mail_Transport_Exception $e) {
+            pm_Log::debug('Failed to send mail');
+            pm_Log::err($e);
+        }
+
+        return $response;
+    }
+
     /** Send notification to admin
      * @param $domain Modules_WebsiteVirusCheck_PleskDomain
      * @return null
@@ -443,7 +493,7 @@ class Modules_WebsiteVirusCheck_Helper
         $mail->setFrom($adminEmail, $cnameEmail);
         $mail->addTo($adminEmail, $cnameEmail);
         $mail->setSubject(pm_Locale::lmsg('emailNotificationSubjectBadDomain', ['domain' => $domain->ascii_name]));
-        $mail->send();
+        self::sendMailRequest($mail);
 
         return;
     }
