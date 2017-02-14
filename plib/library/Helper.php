@@ -451,7 +451,7 @@ class Modules_WebsiteVirusCheck_Helper
     {
         $response = false;
         try {
-            $mail->send();
+            $response = $mail->send();
         } catch (Zend_Mail_Transport_Exception $e) {
             pm_Log::debug('Failed to send mail');
             pm_Log::err($e);
