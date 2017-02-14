@@ -12,6 +12,7 @@ class Modules_WebsiteVirusCheck_PleskDomain
         $this->dns_ip_address = $dns_ip_address;
         $this->htype = $htype;
         $this->webspace_id  = $webspace_id ? $webspace_id : $id;
+        $this->enabled = true;
     }
     
     /**

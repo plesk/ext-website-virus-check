@@ -192,12 +192,9 @@ class IndexController extends pm_Controller_Action
     
     private function _getDomainsReportList() 
     {
-        $i = 0;
         $data = [];
         $report = Modules_WebsiteVirusCheck_Helper::getDomainsReport();
         foreach ($report['all'] as $domain) {
-            $i++;
-
             $scan_date_column = isset($domain->virustotal_scan_date) ? $domain->virustotal_scan_date : '';
             if (isset($domain->no_scanning_results)) {
                 $result_column = $domain->no_scanning_results;
@@ -206,9 +203,15 @@ class IndexController extends pm_Controller_Action
                 $result_column = $domain->virustotal_positives . ' / ' . $domain->virustotal_total;
                 $report_link_column = '<a rel="noopener noreferrer" target="_blank" href="' . $domain->virustotal_domain_info_url . '">' .  $this->lmsg('virustotalReport') . '</a>';
             }
-            
-            $data[$i] = [
-                'column-1' => '<a target="_blank" href="/admin/subscription/login/id/' . $domain->webspace_id . '?pageUrl=/web/overview/id/d:' . $domain->id . '">' . $domain->name . '</a>',
+
+            $col_1 = '<a target="_blank" href="/admin/subscription/login/id/' . $domain->webspace_id . '?pageUrl=/web/overview/id/d:' . $domain->id . '">' . $domain->name . '</a>';
+            if (!$domain->enabled) {
+                $disabledImage = pm_Context::getBaseUrl() . '/images/disabled.png';
+                $col_1 = '<img src="' . $disabledImage . '" alt="Scanning disabled" title=""> ' . $col_1;
+            }
+
+            $data[$domain->id] = [
+                'column-1' => $col_1,
                 'column-2' => $domain->getAvailable(),
                 'column-3' => $scan_date_column,
                 'column-4' => $result_column,
@@ -227,6 +230,7 @@ class IndexController extends pm_Controller_Action
         $list = new pm_View_List_Simple($this->view, $this->_request, $options);
         $list->setData($data);
         $list->setColumns([
+            pm_View_List_Simple::COLUMN_SELECTION,
             'column-1' => [
                 'title' => $this->lmsg('domain'),
                 'noEscape' => true,
@@ -255,8 +259,48 @@ class IndexController extends pm_Controller_Action
             ],
         ]);
 
+        $list->setTools([
+            [
+                'title' => $this->lmsg('buttonEnable'),
+                'description' => $this->lmsg('buttonEnableDesc'),
+                'class' => 'sb-make-visible',
+                'execGroupOperation' => $this->_helper->url('enable'),
+            ],
+            [
+                'title' => $this->lmsg('buttonDisable'),
+                'description' => $this->lmsg('buttonDisableDesc'),
+                'class' => 'sb-make-invisible',
+                'execGroupOperation' => $this->_helper->url('disable'),
+            ],
+        ]);
+
         $list->setDataUrl(['action' => 'report-data']);
         return $list;
     }
 
+    public function enableAction()
+    {
+        foreach ((array)$this->_getParam('ids') as $domainId) {
+            $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
+            if ($report) {
+                $report['domain']['enabled'] = true;
+                pm_Settings::set('domain_id_' . $domainId, json_encode($report));
+            }
+        }
+        $messages[] = ['status' => 'info', 'content' => $this->lmsg('buttonEnableSuccess')];
+        $this->_helper->json(['status' => 'success', 'statusMessages' => $messages]);
+    }
+
+    public function disableAction()
+    {
+        foreach ((array)$this->_getParam('ids') as $domainId) {
+            $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
+            if ($report) {
+                $report['domain']['enabled'] = false;
+                pm_Settings::set('domain_id_' . $domainId, json_encode($report));
+            }
+        }
+        $messages[] = ['status' => 'info', 'content' => $this->lmsg('buttonDisableSuccess')];
+        $this->_helper->json(['status' => 'success', 'statusMessages' => $messages]);
+    }
 }

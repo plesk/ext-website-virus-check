@@ -46,7 +46,12 @@ class Modules_WebsiteVirusCheck_Helper
             }
             
             $report = json_decode(pm_Settings::get('domain_id_' . $domain->id), true);
-            if ($report && isset($report['virustotal_request_done']) && !$report['virustotal_request_done']) {
+            if ($report
+                && isset($report['virustotal_request_done'])
+                && !$report['virustotal_request_done']) {
+                continue;
+            }
+            if ($report && !$report['domain']['enabled']) {
                 continue;
             }
             if (!$report) {
@@ -167,6 +172,10 @@ class Modules_WebsiteVirusCheck_Helper
             }
             $request = json_decode(pm_Settings::get('domain_id_' . $domain->id), true);
             if (!$request) {
+                continue;
+            }
+
+            if (!$request['domain']['enabled']) {
                 continue;
             }
 
@@ -339,7 +348,8 @@ class Modules_WebsiteVirusCheck_Helper
                 $domain->no_scanning_results = pm_Locale::lmsg('scanningWasNotPerformedYetForList');
             } else {
                 $domain->no_scanning_results = pm_Locale::lmsg('scanningRequestIsSent');
-                
+
+                $domain->enabled = $report['domain']['enabled'];
                 $domain->available = $report['domain']['available'];
                 if ($domain->available == 'no' || (isset($report['virustotal_scan_date']) && $report['virustotal_scan_date'] === '')) {
                     $domain->no_scanning_results = pm_Locale::lmsg('domainInactiveOrCantbeResolvedInHostingIp');
