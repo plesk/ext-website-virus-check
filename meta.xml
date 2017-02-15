@@ -4,6 +4,7 @@
   <name>VirusTotal Website Check</name>
   <description>Check your websites for viruses automatically using multiple anti-virus engines.</description>
   <description xml:lang="ru-RU">Автоматизируйте бесплатную проверку своих сайтов на вирусы.</description>
+  <category>security</category>
   <version>1.2</version>
   <release>1</release>
   <vendor>Plesk</vendor>
