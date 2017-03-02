@@ -195,27 +195,36 @@ class IndexController extends pm_Controller_Action
         $data = [];
         $report = Modules_WebsiteVirusCheck_Helper::getDomainsReport();
         foreach ($report['all'] as $domain) {
-            $scan_date_column = isset($domain->virustotal_scan_date) ? $domain->virustotal_scan_date : '';
+            $colScanDate = isset($domain->virustotal_scan_date) ? $domain->virustotal_scan_date : '';
             if (isset($domain->no_scanning_results)) {
-                $result_column = $domain->no_scanning_results;
-                $report_link_column = '';
+                $colCheckResult = $domain->no_scanning_results;
+                $colReportLink = '';
             } else {
-                $result_column = $domain->virustotal_positives . ' / ' . $domain->virustotal_total;
-                $report_link_column = '<a rel="noopener noreferrer" target="_blank" href="' . $domain->virustotal_domain_info_url . '">' .  $this->lmsg('virustotalReport') . '</a>';
+                $colCheckResult = $domain->virustotal_positives . ' / ' . $domain->virustotal_total;
+                $colReportLink = '<a rel="noopener noreferrer" target="_blank" href="' . $domain->virustotal_domain_info_url . '">' .  $this->lmsg('virustotalReport') . '</a>';
             }
 
-            $col_1 = '<a target="_blank" href="/admin/subscription/login/id/' . $domain->webspace_id . '?pageUrl=/web/overview/id/d:' . $domain->id . '">' . $domain->name . '</a>';
-            if (!$domain->enabled) {
-                $disabledImage = pm_Context::getBaseUrl() . '/images/disabled.png';
-                $col_1 = '<img src="' . $disabledImage . '" alt="Scanning disabled" title=""> ' . $col_1;
+            if ($domain->enabled) {
+                $stateImgSrc = pm_Context::getBaseUrl() . '/images/enabled.png';
+                $stateImgAlt = $this->lmsg('scanningEnabled');
+                if ((int)$domain->virustotal_positives > 0) {
+                    $stateImgSrc = pm_Context::getBaseUrl() . '/images/bad.png';
+                    $stateImgAlt = $this->lmsg('badReport');
+                }
+            } else {
+                $stateImgSrc = pm_Context::getBaseUrl() . '/images/disabled.png';
+                $stateImgAlt = $this->lmsg('scanningDisabled');
             }
 
+            $colScanningState = '<img src="' . $stateImgSrc . '" alt="' . $stateImgAlt . '" title="' . $stateImgAlt . '">';
+            $colDomain = '<a target="_blank" href="/admin/subscription/login/id/' . $domain->webspace_id . '?pageUrl=/web/overview/id/d:' . $domain->id . '">' . $domain->name . '</a>';
             $data[$domain->id] = [
-                'column-1' => $col_1,
-                'column-2' => $domain->getAvailable(),
-                'column-3' => $scan_date_column,
-                'column-4' => $result_column,
-                'column-5' => $report_link_column,
+                'column-1' => $colScanningState,
+                'column-2' => $colDomain,
+                'column-3' => $domain->getAvailable(),
+                'column-4' => $colScanDate,
+                'column-5' => $colCheckResult,
+                'column-6' => $colReportLink,
             ];
         }
         
@@ -224,7 +233,7 @@ class IndexController extends pm_Controller_Action
         }
         
         $options = [
-            'defaultSortField' => 'column-1',
+            'defaultSortField' => 'column-2',
             'defaultSortDirection' => pm_View_List_Simple::SORT_DIR_DOWN,
         ];
         $list = new pm_View_List_Simple($this->view, $this->_request, $options);
@@ -232,25 +241,31 @@ class IndexController extends pm_Controller_Action
         $list->setColumns([
             pm_View_List_Simple::COLUMN_SELECTION,
             'column-1' => [
+                'title' => $this->lmsg('scanningState'),
+                'noEscape' => true,
+                'searchable' => false,
+                'sortable' => true,
+            ],
+            'column-2' => [
                 'title' => $this->lmsg('domain'),
                 'noEscape' => true,
                 'searchable' => true,
                 'sortable' => true,
             ],
-            'column-2' => [
+            'column-3' => [
                 'title' => $this->lmsg('availableForScanning'),
                 'searchable' => false,
                 'sortable' => true,
             ],
-            'column-3' => [
+            'column-4' => [
                 'title' => $this->lmsg('scanDate'),
                 'sortable' => true,
             ],
-            'column-4' => [
+            'column-5' => [
                 'title' => $this->lmsg('checkResult'),
                 'sortable' => true,
             ],
-            'column-5' => [
+            'column-6' => [
                 'title' => $this->lmsg('reportLink'),
                 'noEscape' => true,
                 'searchable' => false,
