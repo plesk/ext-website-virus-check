@@ -394,7 +394,7 @@ class Modules_WebsiteVirusCheck_Helper
             $domains['bad'][$domain->id] = $domain;
         }
 
-        pm_Log::debug('REports : ' . print_r($domains, 1));
+        pm_Log::debug('Reports: ' . print_r($domains, 1));
         return $domains;
     }
 
