@@ -206,8 +206,8 @@ class IndexController extends pm_Controller_Action
 
             if ($domain->enabled) {
                 $stateImgSrc = pm_Context::getBaseUrl() . '/images/enabled.png';
-                $stateImgAlt = $this->lmsg('scanningEnabled');
-                if ((int)$domain->virustotal_positives > 0) {
+                $stateImgAlt = $this->lmsg('scanningEnabled');  
+                if (isset($domain->virustotal_positives) && (int)$domain->virustotal_positives > 0) {
                     $stateImgSrc = pm_Context::getBaseUrl() . '/images/bad.png';
                     $stateImgAlt = $this->lmsg('badReport');
                 }

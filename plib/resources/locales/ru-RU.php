@@ -47,6 +47,8 @@ $messages = array(
     'scanningWasNotPerformedYetForList' => 'Сканирование еще не выполнялось',
     'youCanStartTaskAt' => 'Чтобы выполнить сканирование сейчас, Вы можете запустить запланированную задачу в <a href="/admin/scheduler/tasks-list">Планировщике задач</a>',
     'scanningRequestIsSent' => 'Запрос на сканирование отправлен',
+    'httpError' => 'HTTP Error: %%message%%',
+    'httpErrorFailedToConnectVirusTotalUnknownError' => 'Неизветсная ошибка соединения с сервером VirusTotal API',
     'totalDomains' => 'Всего доменов проверено: ',
     'ofTotalDomains' => ' из всего проверенных доменов ',
     'totalReports' => 'Всего "плохих" отчетов: ',

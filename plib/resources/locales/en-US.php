@@ -47,6 +47,8 @@ $messages = array(
     'youCanStartTaskAt' => 'You can start scheduled task for scanning now at <a href="/admin/scheduler/tasks-list">Scheduled Tasks</a>',
     'scanningWasNotPerformedYetForList' => 'Scanning was not performed yet',
     'scanningRequestIsSent' => 'Scanning request is sent',
+    'httpError' => 'HTTP Error: %%message%%',
+    'httpErrorFailedToConnectVirusTotalUnknownError' => 'Failed to connect VirusTotal API server with Unknown error',
     'totalDomains' => 'Domains scanned: ',
     'ofTotalDomains' => ' of all domains selected for scanning ',
     'totalReports' => 'Total "bad" domains: ',

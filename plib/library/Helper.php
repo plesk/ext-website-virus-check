@@ -74,19 +74,16 @@ class Modules_WebsiteVirusCheck_Helper
             $report['virustotal_request_done'] = false;
             
             $request = self::virustotal_scan_url_request($domain->ascii_name);
-            if (empty($request)) {
-                pm_Log::debug('Empty request for ' . $domain->ascii_name . ' : ' . print_r($request, 1));
-                pm_Settings::set('scan_lock', 0);
-                return;
+            if (isset($request['http_error'])) {
+                $report['http_error'] = $request['http_error'];
+            } else {
+                $report['virustotal_request'] = array(
+                    'response_code' => isset($request['response_code']) ? $request['response_code'] : 0,
+                    'scan_date' => isset($request['scan_date']) ? $request['scan_date'] : '',
+                );
             }
-            
-            $report['virustotal_request'] = array(
-                'response_code' => $request['response_code'],
-                'scan_date' => isset($request['scan_date']) ? $request['scan_date'] : '',
-            );
 
             self::setDomainReport($domain->id, $report);
-
         }
         
         pm_Settings::set('scan_lock', 0);
@@ -186,13 +183,7 @@ class Modules_WebsiteVirusCheck_Helper
                 exit(0);
             }
             $report = self::virustotal_scan_url_report($domain->ascii_name);
-
             pm_Log::debug(print_r($report, 1));
-
-            if (empty($report)) {
-                pm_Log::debug('Empty report for ' . $domain->ascii_name);
-                return;
-            }
 
             self::report_domain($domain, $report);
         }
@@ -237,13 +228,16 @@ class Modules_WebsiteVirusCheck_Helper
         if (!$report) {
             $report = [];
         }
+        if (isset($new_report['http_error'])) {
+            $report['http_error'] = $new_report['http_error'];
+        }
         $report['virustotal_request_done'] = true;
-        $report['virustotal_response_code'] = $new_report['response_code'];
-        $report['virustotal_positives'] = isset($new_report['positives']) ? (int)$new_report['positives'] : '';
+        $report['virustotal_response_code'] = isset($new_report['response_code']) ? (int)$new_report['response_code'] : 0;
+        $report['virustotal_positives'] = isset($new_report['positives']) ? (int)$new_report['positives'] : 0;
         $report['virustotal_total'] = isset($new_report['total']) ? (int)$new_report['total'] : '';
         $report['virustotal_scan_date'] = isset($new_report['scan_date']) ? $new_report['scan_date'] : '';
 
-        if ($report['virustotal_positives'] != '' && (int)$report['virustotal_positives'] > 0) {
+        if ((int)$report['virustotal_positives'] > 0) {
             self::sendNotification($domain);
         }
 
@@ -254,7 +248,7 @@ class Modules_WebsiteVirusCheck_Helper
 
     /**
      * @param $client Zend_Http_Client
-     * @return Zend_Http_Response|false
+     * @return Zend_Http_Response|Zend_Http_Client_Adapter_Exception|false
      */
     static function send_http_request(Zend_Http_Client $client) {
         $response = false;
@@ -266,9 +260,9 @@ class Modules_WebsiteVirusCheck_Helper
                 pm_Log::debug('Successfully connected to ' . self::virustotal_scan_url);
                 break;
             } catch (Zend_Http_Client_Adapter_Exception $e) {
-                pm_Log::debug('Failed connect to ' . self::virustotal_scan_url);
-                pm_Log::err($e);
+                pm_Log::err('Failed connect to ' . self::virustotal_scan_url . $e->getMessage());
                 sleep(5);
+                return $e;
             }
         }
 
@@ -289,7 +283,14 @@ class Modules_WebsiteVirusCheck_Helper
 
         $response = self::send_http_request($client);
         if ($response === false) {
-            return array();
+            return array (
+                'http_error' => pm_Locale::lmsg('httpErrorFailedToConnectVirusTotalUnknownError'),
+            );
+        }
+        if ($response instanceof Zend_Http_Client_Adapter_Exception) {
+            return array (
+                'http_error' => $response->getMessage(),
+            );
         }
 
         if ($response->getStatus() == 403) {
@@ -316,7 +317,14 @@ class Modules_WebsiteVirusCheck_Helper
 
         $response = self::send_http_request($client);
         if ($response === false) {
-            return array();
+            return array (
+                'http_error' => pm_Locale::lmsg('failedToConnectVirusTotalUnknownError'),
+            );
+        }
+        if ($response instanceof Zend_Http_Client_Adapter_Exception) {
+            return array (
+                'http_error' => $response->getMessage(),
+            );
         }
 
         if ($response->getStatus() == 403) {
@@ -362,6 +370,9 @@ class Modules_WebsiteVirusCheck_Helper
                 if ($domain->available == 'no' || (isset($report['virustotal_scan_date']) && $report['virustotal_scan_date'] === '')) {
                     $domain->no_scanning_results = pm_Locale::lmsg('domainInactiveOrCantbeResolvedInHostingIp');
                 }
+                if (isset($report['http_error'])) {
+                    $domain->no_scanning_results = pm_Locale::lmsg('httpError', array('message' => $report['http_error']));
+                }
             }
                         
             if (isset($report['virustotal_response_code']) && $report['virustotal_response_code'] > 0) {
@@ -382,7 +393,8 @@ class Modules_WebsiteVirusCheck_Helper
             
             $domains['bad'][$domain->id] = $domain;
         }
-        
+
+        pm_Log::debug('Reports: ' . print_r($domains, 1));
         return $domains;
     }
 
