@@ -196,15 +196,22 @@ class IndexController extends pm_Controller_Action
         $report = Modules_WebsiteVirusCheck_Helper::getDomainsReport();
         foreach ($report['all'] as $domain) {
             $colScanDate = isset($domain->virustotal_scan_date) ? $domain->virustotal_scan_date : '';
-            if (isset($domain->no_scanning_results)) {
-                $colCheckResult = $domain->no_scanning_results;
-                $colReportLink = '';
-            } else {
-                $colCheckResult = $domain->virustotal_positives . ' / ' . $domain->virustotal_total;
-                $colReportLink = '<a rel="noopener noreferrer" target="_blank" href="' . $domain->virustotal_domain_info_url . '">' .  $this->lmsg('virustotalReport') . '</a>';
+            $colScanResult = pm_Locale::lmsg('domainInactiveOrCantbeResolvedInHostingIp');
+            $colReportLink = '';
+            $isDomainAvailable = $domain->isAvailable();
+            if ($isDomainAvailable) {
+                if (isset($domain->no_scanning_results)) {
+                    $colScanResult = $domain->no_scanning_results;
+                } else {
+                    $colScanResult = $domain->virustotal_positives . ' / ' . $domain->virustotal_total;
+                    $colReportLink = '<a rel="noopener noreferrer" target="_blank" href="' . $domain->virustotal_domain_info_url . '">' . $this->lmsg('virustotalReport') . '</a>';
+                }
             }
 
-            if ($domain->enabled) {
+            if (!$isDomainAvailable) {
+                $stateImgSrc = pm_Context::getBaseUrl() . '/images/warning.png';
+                $stateImgAlt = $this->lmsg('domainInactiveOrCantbeResolvedInHostingIp');
+            } else if ($domain->enabled) {
                 $stateImgSrc = pm_Context::getBaseUrl() . '/images/enabled.png';
                 $stateImgAlt = $this->lmsg('scanningEnabled');  
                 if (isset($domain->virustotal_positives) && (int)$domain->virustotal_positives > 0) {
@@ -216,15 +223,14 @@ class IndexController extends pm_Controller_Action
                 $stateImgAlt = $this->lmsg('scanningDisabled');
             }
 
-            $colScanningState = '<img src="' . $stateImgSrc . '" alt="' . $stateImgAlt . '" title="' . $stateImgAlt . '">';
+            $colScanningState = '<img src="' . $stateImgSrc . '" title="' . htmlspecialchars($stateImgAlt, ENT_QUOTES) . '">';
             $colDomain = '<a target="_blank" href="/admin/subscription/login/id/' . $domain->webspace_id . '?pageUrl=/web/overview/id/d:' . $domain->id . '">' . $domain->name . '</a>';
             $data[$domain->id] = [
                 'column-1' => $colScanningState,
                 'column-2' => $colDomain,
-                'column-3' => $domain->getAvailable(),
-                'column-4' => $colScanDate,
-                'column-5' => $colCheckResult,
-                'column-6' => $colReportLink,
+                'column-3' => $colScanDate,
+                'column-4' => $colScanResult,
+                'column-5' => $colReportLink,
             ];
         }
         
@@ -253,19 +259,14 @@ class IndexController extends pm_Controller_Action
                 'sortable' => true,
             ],
             'column-3' => [
-                'title' => $this->lmsg('availableForScanning'),
-                'searchable' => false,
-                'sortable' => true,
-            ],
-            'column-4' => [
                 'title' => $this->lmsg('scanDate'),
                 'sortable' => true,
             ],
-            'column-5' => [
+            'column-4' => [
                 'title' => $this->lmsg('checkResult'),
                 'sortable' => true,
             ],
-            'column-6' => [
+            'column-5' => [
                 'title' => $this->lmsg('reportLink'),
                 'noEscape' => true,
                 'searchable' => false,
