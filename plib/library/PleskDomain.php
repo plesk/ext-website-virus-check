@@ -13,6 +13,8 @@ class Modules_WebsiteVirusCheck_PleskDomain
         $this->htype = $htype;
         $this->webspace_id  = $webspace_id ? $webspace_id : $id;
         $this->enabled = true;
+        $this->virustotal_positives = 0;
+        $this->virustotal_bad_urls_and_samples = 0;
     }
     
     /**

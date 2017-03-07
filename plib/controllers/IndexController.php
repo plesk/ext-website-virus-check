@@ -197,6 +197,7 @@ class IndexController extends pm_Controller_Action
         foreach ($report['all'] as $domain) {
             $colScanDate = isset($domain->virustotal_scan_date) ? $domain->virustotal_scan_date : '';
             $colScanResult = pm_Locale::lmsg('domainInactiveOrCantbeResolvedInHostingIp');
+            $colBadUrlsAndSamples = $domain->virustotal_bad_urls_and_samples;
             $colReportLink = '';
             $isDomainAvailable = $domain->isAvailable();
             if ($isDomainAvailable) {
@@ -214,7 +215,7 @@ class IndexController extends pm_Controller_Action
             } else if ($domain->enabled) {
                 $stateImgSrc = pm_Context::getBaseUrl() . '/images/enabled.png';
                 $stateImgAlt = $this->lmsg('scanningEnabled');  
-                if (isset($domain->virustotal_positives) && (int)$domain->virustotal_positives > 0) {
+                if ((int)$domain->virustotal_positives > 0 || $domain->virustotal_bad_urls_and_samples > 0) {
                     $stateImgSrc = pm_Context::getBaseUrl() . '/images/bad.png';
                     $stateImgAlt = $this->lmsg('badReport');
                 }
@@ -230,7 +231,8 @@ class IndexController extends pm_Controller_Action
                 'column-2' => $colDomain,
                 'column-3' => $colScanDate,
                 'column-4' => $colScanResult,
-                'column-5' => $colReportLink,
+                'column-5' => $colBadUrlsAndSamples,
+                'column-6' => $colReportLink,
             ];
         }
         
@@ -267,6 +269,10 @@ class IndexController extends pm_Controller_Action
                 'sortable' => true,
             ],
             'column-5' => [
+                'title' => $this->lmsg('badUrlsAndSamples'),
+                'sortable' => true,
+            ],
+            'column-6' => [
                 'title' => $this->lmsg('reportLink'),
                 'noEscape' => true,
                 'searchable' => false,

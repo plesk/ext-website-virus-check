@@ -5,6 +5,7 @@ class Modules_WebsiteVirusCheck_Helper
 {
     const virustotal_scan_url = 'https://www.virustotal.com/vtapi/v2/url/scan';
     const virustotal_report_url = 'https://www.virustotal.com/vtapi/v2/url/report';
+    const virustotal_report_domain = 'https://www.virustotal.com/vtapi/v2/domain/report';
     const virustotal_domain_info_url = 'https://www.virustotal.com/domain/%s/information/';
     const virustotal_api_timeout = 20;
     const virustotal_api_day_limit = 4320;
@@ -185,6 +186,11 @@ class Modules_WebsiteVirusCheck_Helper
             $report = self::virustotal_scan_url_report($domain->ascii_name);
             pm_Log::debug(print_r($report, 1));
 
+            $reportDomain =  self::virustotal_scan_domain_report($domain->ascii_name);
+            $report['detected_urls'] = isset($reportDomain['detected_urls']) ? count($reportDomain['detected_urls']): 0;
+            $report['detected_communicating_samples'] = isset($reportDomain['detected_communicating_samples']) ? count($reportDomain['detected_communicating_samples']): 0;
+            $report['detected_referrer_samples'] = isset($reportDomain['detected_referrer_samples']) ? count($reportDomain['detected_referrer_samples']): 0;
+
             self::report_domain($domain, $report);
         }
     }
@@ -236,8 +242,14 @@ class Modules_WebsiteVirusCheck_Helper
         $report['virustotal_positives'] = isset($new_report['positives']) ? (int)$new_report['positives'] : 0;
         $report['virustotal_total'] = isset($new_report['total']) ? (int)$new_report['total'] : '';
         $report['virustotal_scan_date'] = isset($new_report['scan_date']) ? $new_report['scan_date'] : '';
+        $report['detected_urls'] = $new_report['detected_urls'];
+        $report['detected_communicating_samples'] = $new_report['detected_communicating_samples'];
+        $report['detected_referrer_samples'] = $new_report['detected_referrer_samples'];
 
-        if ((int)$report['virustotal_positives'] > 0) {
+        if ((int)$report['virustotal_positives'] > 0
+            || $report['detected_urls'] > 0
+            || $report['detected_communicating_samples'] > 0
+            || $report['detected_referrer_samples'] > 0) {
             self::sendNotification($domain);
         }
 
@@ -248,19 +260,20 @@ class Modules_WebsiteVirusCheck_Helper
 
     /**
      * @param $client Zend_Http_Client
+     * @param $method string
      * @return Zend_Http_Response|Zend_Http_Client_Adapter_Exception|false
      */
-    static function send_http_request(Zend_Http_Client $client) {
+    static function send_http_request(Zend_Http_Client $client, $method = Zend_Http_Client::GET) {
         $response = false;
 
         for ($try = 5; $try > 0; $try--) {
             pm_Log::debug('Try to connect ' . self::virustotal_scan_url);
             try {
-                $response = $client->request(Zend_Http_Client::POST);
-                pm_Log::debug('Successfully connected to ' . self::virustotal_scan_url);
+                $response = $client->request($method);
+                pm_Log::debug('Successfully request ' . $method . ' ' . self::virustotal_scan_url);
                 break;
             } catch (Zend_Http_Client_Adapter_Exception $e) {
-                pm_Log::err('Failed connect to ' . self::virustotal_scan_url . $e->getMessage());
+                pm_Log::err('Failed to request ' . $method . ' ' . self::virustotal_scan_url . $e->getMessage());
                 sleep(5);
                 return $e;
             }
@@ -281,7 +294,7 @@ class Modules_WebsiteVirusCheck_Helper
         $client->setParameterPost('apikey', pm_Settings::get('virustotal_api_key'));
         sleep(self::virustotal_api_timeout);
 
-        $response = self::send_http_request($client);
+        $response = self::send_http_request($client, Zend_Http_Client::POST);
         if ($response === false) {
             return array (
                 'http_error' => pm_Locale::lmsg('httpErrorFailedToConnectVirusTotalUnknownError'),
@@ -301,7 +314,7 @@ class Modules_WebsiteVirusCheck_Helper
     }
 
     /**
-     * https://virustotal.com/ru/documentation/public-api/#getting-domain-reports
+     * https://virustotal.com/ru/documentation/public-api/#getting-url-scans
      *
      * @param $url string
      * @return array
@@ -315,7 +328,7 @@ class Modules_WebsiteVirusCheck_Helper
 
         sleep(self::virustotal_api_timeout);
 
-        $response = self::send_http_request($client);
+        $response = self::send_http_request($client, Zend_Http_Client::POST);
         if ($response === false) {
             return array (
                 'http_error' => pm_Locale::lmsg('failedToConnectVirusTotalUnknownError'),
@@ -333,6 +346,41 @@ class Modules_WebsiteVirusCheck_Helper
 
         return json_decode($response->getBody(), true);
     }
+
+    /**
+     * https://virustotal.com/ru/documentation/public-api/#getting-domain-reports
+     *
+     * @param $domainAsciiName string
+     * @return array
+     */
+    public static function virustotal_scan_domain_report($domainAsciiName)
+    {
+        $client = new Zend_Http_Client(self::virustotal_report_domain);
+
+        $client->setParameterGet('domain', $domainAsciiName);
+        $client->setParameterGet('apikey', pm_Settings::get('virustotal_api_key'));
+
+        sleep(self::virustotal_api_timeout);
+
+        $response = self::send_http_request($client, Zend_Http_Client::GET);
+        if ($response === false) {
+            return array (
+                'http_error' => pm_Locale::lmsg('failedToConnectVirusTotalUnknownError'),
+            );
+        }
+        if ($response instanceof Zend_Http_Client_Adapter_Exception) {
+            return array (
+                'http_error' => $response->getMessage(),
+            );
+        }
+
+        if ($response->getStatus() == 403) {
+            pm_Settings::set('apiKeyBecameInvalid', '1');
+        }
+
+        return json_decode($response->getBody(), true);
+    }
+
 
     /**
      * @return array[string]
@@ -376,11 +424,11 @@ class Modules_WebsiteVirusCheck_Helper
             }
                         
             if (isset($report['virustotal_response_code']) && $report['virustotal_response_code'] > 0) {
-                
                 unset($domain->no_scanning_results);
                 $domain->virustotal_scan_date = $report['virustotal_scan_date'];
                 $domain->virustotal_positives = $report['virustotal_positives'];
                 $domain->virustotal_total = $report['virustotal_total'];
+                $domain->virustotal_bad_urls_and_samples = $report['detected_urls'] + $report['detected_communicating_samples'] + $report['detected_referrer_samples'];
                 $domain->virustotal_domain_info_url = sprintf(self::virustotal_domain_info_url, $domain->ascii_name);
             }
 
@@ -533,7 +581,11 @@ class Modules_WebsiteVirusCheck_Helper
      * @return mixed
      */
     static function getDomainReport($domainId) {
-        return json_decode(pm_Settings::get('domain_id_' . $domainId), true);
+        $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
+        $report['detected_urls'] = isset($report['detected_urls']) ? $report['detected_urls'] : 0;
+        $report['detected_communicating_samples'] = isset($report['detected_communicating_samples']) ? $report['detected_communicating_samples'] : 0;
+        $report['detected_referrer_samples'] = isset($report['detected_referrer_samples']) ? $report['detected_referrer_samples'] : 0;
+        return $report;
     }
 
     /** Set domain report by domain id
