@@ -4,10 +4,12 @@
 class Modules_WebsiteVirusCheck_Task_Scan extends pm_LongTask_Task // Since Plesk 17.0
 {
     public $trackProgress = true;
+    public $selectedDomains = [];
 
     public function run()
     {
-        Modules_WebsiteVirusCheck_Helper::check(); // scan_lock is acquired inside check()
+        $this->selectedDomains = $this->getParam('selectedDomains', []);
+        Modules_WebsiteVirusCheck_Helper::check($this->selectedDomains); // scan_lock is acquired inside check()
     }
 
     public function statusMessage()

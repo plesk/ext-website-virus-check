@@ -70,9 +70,19 @@ class IndexController extends pm_Controller_Action
 
     public function startAction()
     {
+        $allDomains = Modules_WebsiteVirusCheck_Helper::getDomains();
+        $selectedDomainIds = (array)$this->_getParam('ids');
+        $selectedDomains = [];
+        foreach ($allDomains as $domain) {
+            if (in_array($domain->id, $selectedDomainIds)) {
+                $selectedDomains[$domain->id] = $domain;
+            }
+        }
+
         $taskManager = new pm_LongTask_Manager();
-        $task1 = new Modules_WebsiteVirusCheck_Task_Scan();
-        $taskManager->start($task1);
+        $scanTask = new Modules_WebsiteVirusCheck_Task_Scan();
+        $scanTask->setParams(['selectedDomains' => $selectedDomains]);
+        $taskManager->start($scanTask);
 
         for ($i = 1; $i < 5; $i++) { // wait for acquiring lock to keep UI consistent
             if (pm_Settings::get('scan_lock')) {
@@ -281,20 +291,40 @@ class IndexController extends pm_Controller_Action
             ],
         ]);
 
-        $list->setTools([
-            [
-                'title' => $this->lmsg('buttonEnable'),
-                'description' => $this->lmsg('buttonEnableDesc'),
-                'class' => 'sb-make-visible',
-                'execGroupOperation' => $this->_helper->url('enable'),
-            ],
-            [
-                'title' => $this->lmsg('buttonDisable'),
-                'description' => $this->lmsg('buttonDisableDesc'),
-                'class' => 'sb-make-invisible',
-                'execGroupOperation' => $this->_helper->url('disable'),
-            ],
-        ]);
+        $listTools = [];
+        if (class_exists('pm_LongTask_Manager')) { // Since Plesk 17.0
+            $isRunning = pm_Settings::get('scan_lock');
+            $action = $isRunning ? 'stop' : 'start';
+            if ($action == 'start') {
+                $listTools[] = [
+                    'title' => $isRunning ? $this->lmsg('buttonStopScan') : $this->lmsg('buttonStartScan'),
+                    'description' => $isRunning ? $this->lmsg('buttonStopDesc') : $this->lmsg('buttonStartSelectedDesc'),
+                    'class' => "sb-{$action}",
+                    'execGroupOperation' => $this->_helper->url($action),
+                ];
+            } else {
+                $listTools[] = [
+                    'title' => $isRunning ? $this->lmsg('buttonStopScan') : $this->lmsg('buttonStartScan'),
+                    'description' => $isRunning ? $this->lmsg('buttonStopDesc') : $this->lmsg('buttonStartSelectedDesc'),
+                    'class' => "sb-{$action}",
+                    'link' => $this->view->getHelper('baseUrl')->moduleUrl(['action' => $action]),
+                ];
+            }
+        }
+        $listTools[] = [
+            'title' => $this->lmsg('buttonEnable'),
+            'description' => $this->lmsg('buttonEnableDesc'),
+            'class' => 'sb-make-visible',
+            'execGroupOperation' => $this->_helper->url('enable'),
+        ];
+        $listTools[] = [
+            'title' => $this->lmsg('buttonDisable'),
+            'description' => $this->lmsg('buttonDisableDesc'),
+            'class' => 'sb-make-invisible',
+            'execGroupOperation' => $this->_helper->url('disable'),
+        ];
+
+        $list->setTools($listTools);
 
         $list->setDataUrl(['action' => 'report-data']);
         return $list;

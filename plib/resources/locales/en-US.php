@@ -14,6 +14,7 @@ $messages = array(
     'buttonStartScan' => 'Start',
     'buttonStopScan' => 'Stop',
     'buttonStartDesc' => 'Start Scanning for all domains',
+    'buttonStartSelectedDesc' => 'Start Scanning for selected domains',
     'buttonStopDesc' => 'Stop Scanning',
     'buttonDisable' => 'Disable',
     'buttonDisableDesc' => 'Disable scanning for selected domains.',

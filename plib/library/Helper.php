@@ -11,7 +11,11 @@ class Modules_WebsiteVirusCheck_Helper
     const virustotal_api_day_limit = 4320;
     const virustotal_api_hour_limit = 180;
 
-    public static function check()
+    /**
+     * @param  $domains Modules_WebsiteVirusCheck_PleskDomain[]
+     * @return void
+     */
+    public static function check($domains = [])
     {           
         if (!pm_Settings::get('virustotal_enabled') || !pm_Settings::get('virustotal_api_key')) {
             return;
@@ -36,9 +40,11 @@ class Modules_WebsiteVirusCheck_Helper
 
         pm_Settings::set('last_scan', date('d/M/Y G:i')); // Has dependency with scan_lock
         
-        self::report();
+        self::report($domains);
         $i = 1;
-        $domains = self::getDomains();
+        if (count($domains) == 0) {
+            $domains = self::getDomains();
+        }
         foreach ($domains as $domain) {
             $i++;
 
@@ -92,6 +98,8 @@ class Modules_WebsiteVirusCheck_Helper
         self::cleanup_last_domains();
         self::cleanup_deleted_domains();
     }
+
+
 
     /**
      * VirusTotal API has restriction in 4 req/min, for safety we have limit to 3 req/min (180 req/hour, 4320 req/day)
@@ -158,10 +166,16 @@ class Modules_WebsiteVirusCheck_Helper
         return true;
     }
 
-    public static function report()
+    /**
+     * @param  $domains Modules_WebsiteVirusCheck_PleskDomain[]
+     * @return void
+     */
+    public static function report($domains = [])
     {
         $i = 1;
-        $domains = self::getDomains();
+        if (count($domains) == 0) {
+            $domains = self::getDomains();
+        }
         foreach ($domains as $domain) {
             $i++;
 
@@ -404,6 +418,9 @@ class Modules_WebsiteVirusCheck_Helper
             if (!$report) {
                 $report = [];
                 $report['domain'] = $domain;
+                $report['detected_urls'] = 0;
+                $report['detected_communicating_samples'] = 0;
+                $report['detected_referrer_samples'] = 0;
                 self::setDomainReport($domain->id, $report);
             } else {
                 if (isset($report['virustotal_request'])) {
@@ -428,7 +445,10 @@ class Modules_WebsiteVirusCheck_Helper
                 $domain->virustotal_scan_date = $report['virustotal_scan_date'];
                 $domain->virustotal_positives = $report['virustotal_positives'];
                 $domain->virustotal_total = $report['virustotal_total'];
-                $domain->virustotal_bad_urls_and_samples = $report['detected_urls'] + $report['detected_communicating_samples'] + $report['detected_referrer_samples'];
+                $detectedUrls = isset($report['detected_urls']) ? $report['detected_urls'] : 0;
+                $detectedCommunicatingSamples = isset($report['detected_communicating_samples']) ? $report['detected_communicating_samples'] : 0;
+                $detectedReferrerSamples = isset($report['detected_referrer_samples']) ? $report['detected_referrer_samples'] : 0;
+                $domain->virustotal_bad_urls_and_samples = $detectedUrls + $detectedCommunicatingSamples + $detectedReferrerSamples;
                 $domain->virustotal_domain_info_url = sprintf(self::virustotal_domain_info_url, $domain->ascii_name);
             }
 
@@ -582,9 +602,6 @@ class Modules_WebsiteVirusCheck_Helper
      */
     static function getDomainReport($domainId) {
         $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
-        $report['detected_urls'] = isset($report['detected_urls']) ? $report['detected_urls'] : 0;
-        $report['detected_communicating_samples'] = isset($report['detected_communicating_samples']) ? $report['detected_communicating_samples'] : 0;
-        $report['detected_referrer_samples'] = isset($report['detected_referrer_samples']) ? $report['detected_referrer_samples'] : 0;
         return $report;
     }
 
