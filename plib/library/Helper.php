@@ -524,7 +524,25 @@ class Modules_WebsiteVirusCheck_Helper
         $client->setParameterPost('resource', 'www.virustotal.com');
         $client->setParameterPost('apikey', $key);
 
-        $response = $client->request(Zend_Http_Client::POST);
+        $response = self::send_http_request($client, Zend_Http_Client::POST);
+        if ($response === false) {
+            return [
+                'valid' => false,
+                'http_code' => pm_Locale::lmsg('failedToConnectVirusTotalUnknownError'),
+            ];
+        }
+        if ($response instanceof Zend_Http_Client_Adapter_Exception) {
+            return array (
+                'valid' => false,
+                'http_code' => $response->getStatus(),
+                'http_error' => $response->getMessage(),
+            );
+        }
+
+        if ($response->getStatus() == 403) {
+            pm_Settings::set('apiKeyBecameInvalid', '1');
+        }
+
         $body = json_decode($response->getBody(), true);
         pm_Log::debug('API key check result: ' . print_r($response, 1) . "\n" . print_r($body, 1));
         
@@ -532,12 +550,14 @@ class Modules_WebsiteVirusCheck_Helper
             return [
                 'valid' => true,
                 'http_code' => $response->getStatus(),
+                'http_error' => $response->getMessage(),
             ];
         }
         
         return [
             'valid' => false,
             'http_code' => $response->getStatus(),
+            'http_error' => $response->getMessage(),
         ];
     }
 
