@@ -1,4 +1,4 @@
-# 1.2 (7 March 2017)
+# 1.2 (3 April 2017)
 
 * [+] Selectively disabling scan for sites
 * [+] Show count for bad URLs and samples that communicate with this site
