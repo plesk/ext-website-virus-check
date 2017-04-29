@@ -201,12 +201,65 @@ class Modules_WebsiteVirusCheck_Helper
             pm_Log::debug(print_r($report, 1));
 
             $reportDomain =  self::virustotal_scan_domain_report($domain->ascii_name);
-            $report['detected_urls'] = isset($reportDomain['detected_urls']) ? count($reportDomain['detected_urls']): 0;
-            $report['detected_communicating_samples'] = isset($reportDomain['detected_communicating_samples']) ? count($reportDomain['detected_communicating_samples']): 0;
-            $report['detected_referrer_samples'] = isset($reportDomain['detected_referrer_samples']) ? count($reportDomain['detected_referrer_samples']): 0;
+            $report['detected_urls'] = self::filterVirusTotalReportDomainOldItems($reportDomain)['detected_urls'];
+            $report['detected_communicating_samples'] = self::filterVirusTotalReportDomainOldItems($reportDomain)['detected_communicating_samples'];
+            $report['detected_referrer_samples'] = self::filterVirusTotalReportDomainOldItems($reportDomain)['detected_referrer_samples'];
 
             self::report_domain($domain, $report);
         }
+    }
+
+    /**
+     * @param $reportDomain array
+     * @return array
+     */
+    private static function filterVirusTotalReportDomainOldItems($reportDomain)
+    {
+        $filtered = [
+            'detected_urls' => 0,
+            'detected_communicating_samples' => 0,
+            'detected_referrer_samples' => 0,
+        ];
+
+        $now = new DateTime();
+
+        foreach ($reportDomain['detected_urls'] as $item) {
+            if (!isset($item['scan_date'])) {
+                continue;
+            }
+
+            $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['scan_date']); // "2013-04-07 07:18:09"
+            if ($scanDate === false) {
+                continue;
+            }
+
+            $interval = $now->diff($scanDate);
+            if ((int)$interval->format('%a') < 7) {
+                pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
+                $filtered['detected_urls']++;
+            }
+        }
+
+        foreach ($reportDomain['detected_communicating_samples'] as $item) {
+            if (!isset($item['date'])) {
+                continue;
+            }
+
+            $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['date']); // "2013-04-07 07:18:09"
+            if ($scanDate === false) {
+                continue;
+            }
+
+            $interval = $now->diff($scanDate);
+            if ((int)$interval->format('%a') < 7) {
+                pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
+                $filtered['detected_communicating_samples']++;
+            }
+        }
+
+        $filtered['detected_referrer_samples'] = isset($reportDomain['detected_referrer_samples']) ? count($reportDomain['detected_referrer_samples']) : 0;
+
+        return $filtered;
     }
 
     public static function cleanup_last_domains()
