@@ -1,3 +1,7 @@
+# 1.3 (3 May 2017)
+
+* [-] Fix issue [\#18](https://github.com/plesk/ext-website-virus-check/issues/18): Need to skip old VirusTotal detected urls and samples
+
 # 1.2 (3 April 2017)
 
 * [+] Selectively disabling scan for sites
