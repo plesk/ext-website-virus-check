@@ -223,37 +223,41 @@ class Modules_WebsiteVirusCheck_Helper
 
         $now = new DateTime();
 
-        foreach ($reportDomain['detected_urls'] as $item) {
-            if (!isset($item['scan_date'])) {
-                continue;
-            }
+        if (isset($reportDomain['detected_urls'])) {
+            foreach ($reportDomain['detected_urls'] as $item) {
+                if (!isset($item['scan_date'])) {
+                    continue;
+                }
 
-            $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['scan_date']); // "2013-04-07 07:18:09"
-            if ($scanDate === false) {
-                continue;
-            }
+                $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['scan_date']); // "2013-04-07 07:18:09"
+                if ($scanDate === false) {
+                    continue;
+                }
 
-            $interval = $now->diff($scanDate);
-            if ((int)$interval->format('%a') < 7) {
-                pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
-                $filtered['detected_urls']++;
+                $interval = $now->diff($scanDate);
+                if ((int)$interval->format('%a') < 7) {
+                    pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
+                    $filtered['detected_urls']++;
+                }
             }
         }
 
-        foreach ($reportDomain['detected_communicating_samples'] as $item) {
-            if (!isset($item['date'])) {
-                continue;
-            }
+        if (isset($reportDomain['detected_communicating_samples'])) {
+            foreach ($reportDomain['detected_communicating_samples'] as $item) {
+                if (!isset($item['date'])) {
+                    continue;
+                }
 
-            $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['date']); // "2013-04-07 07:18:09"
-            if ($scanDate === false) {
-                continue;
-            }
+                $scanDate = DateTime::createFromFormat('Y-m-d G:i:s', $item['date']); // "2013-04-07 07:18:09"
+                if ($scanDate === false) {
+                    continue;
+                }
 
-            $interval = $now->diff($scanDate);
-            if ((int)$interval->format('%a') < 7) {
-                pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
-                $filtered['detected_communicating_samples']++;
+                $interval = $now->diff($scanDate);
+                if ((int)$interval->format('%a') < 7) {
+                    pm_Log::debug("Item detected days ago $interval->d:\n" . print_r($item, 1));
+                    $filtered['detected_communicating_samples']++;
+                }
             }
         }
 
