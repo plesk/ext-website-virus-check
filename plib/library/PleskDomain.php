@@ -79,7 +79,7 @@ class Modules_WebsiteVirusCheck_PleskDomain
         $this->available = 'no';
         if ($this->status > 0) {
             return false;
-        } elseif (!$this->isResolvingToPlesk()) {
+        } elseif (!(bool)pm_Settings::get('disableDomainResolving') && !$this->isResolvingToPlesk()) {
             return false;
         }
 
