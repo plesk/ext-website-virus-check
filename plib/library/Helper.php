@@ -480,23 +480,32 @@ class Modules_WebsiteVirusCheck_Helper
                 $report['detected_referrer_samples'] = 0;
                 self::setDomainReport($domain->id, $report);
             } else {
-                if (isset($report['virustotal_request'])) {
-                    $domain->no_scanning_results = pm_Locale::lmsg('scanningRequestIsSent');
-                }
                 if (isset($report['domain']['enabled'])) {
                     $domain->enabled = $report['domain']['enabled'];
                 } else {
                     $domain->enabled = true;
                 }
                 $domain->available = $report['domain']['available'];
-                if ($domain->available == 'no' || (isset($report['virustotal_scan_date']) && $report['virustotal_scan_date'] === '')) {
+                if ($domain->available == 'no') {
                     $domain->no_scanning_results = pm_Locale::lmsg('domainInactiveOrCantbeResolvedInHostingIp');
                 }
                 if (isset($report['http_error'])) {
                     $domain->no_scanning_results = pm_Locale::lmsg('httpError', array('message' => $report['http_error']));
                 }
             }
-                        
+
+            if (isset($report['virustotal_response_code']) && $report['virustotal_response_code'] == 0) {
+                $domain->no_scanning_results = pm_Locale::lmsg('virustotalDomainIsNotScannedYet');
+                if (isset($report['virustotal_request']['response_code'])) {
+                    if ($report['virustotal_request']['response_code'] == -1) {
+                        $domain->no_scanning_results = pm_Locale::lmsg('virustotalCantScanDomain');
+                    }
+                    if ($report['virustotal_request']['response_code'] == 0) {
+                        $domain->no_scanning_results = pm_Locale::lmsg('scanningRequestIsSent');
+                    }
+                }
+            }
+
             if (isset($report['virustotal_response_code']) && $report['virustotal_response_code'] > 0) {
                 unset($domain->no_scanning_results);
                 $domain->virustotal_scan_date = $report['virustotal_scan_date'];
@@ -564,7 +573,7 @@ class Modules_WebsiteVirusCheck_Helper
         }
 
         ksort($domains);
-        pm_Log::debug('Domains : ' . print_r($domains, 1));
+        pm_Log::debug('PleskDomains : ' . print_r($domains, 1));
         return $domains;
     }
 

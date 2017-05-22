@@ -1,3 +1,7 @@
+# 1.4 (29 May 2017)
+
+* [-] Fix issue [\#21](https://github.com/plesk/ext-website-virus-check/issues/21): Provide option to disable domain name resolving
+
 # 1.3 (3 May 2017)
 
 * [-] Fix issue [\#18](https://github.com/plesk/ext-website-virus-check/issues/18): Need to skip old VirusTotal detected urls and samples
