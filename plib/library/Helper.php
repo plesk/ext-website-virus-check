@@ -566,7 +566,7 @@ class Modules_WebsiteVirusCheck_Helper
                 $domain->data->gen_info->name,
                 $domain->data->gen_info->{'ascii-name'},
                 $domain->data->gen_info->status,
-                is_array($domain->data->gen_info->dns_ip_address) ? $domain->data->gen_info->dns_ip_address : array($domain->data->gen_info->dns_ip_address),
+                (array)($domain->data->gen_info->dns_ip_address ?? []),
                 $domain->data->gen_info->htype,
                 isset($domain->data->gen_info->{'webspace-id'}) ? $domain->data->gen_info->{'webspace-id'} : $domain->id
             );
