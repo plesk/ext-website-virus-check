@@ -1,3 +1,7 @@
+# 1.4.1 (17 February 2023)
+
+* [*] Internal improvements.
+
 # 1.4 (29 May 2017)
 
 * [-] Fix issue [\#21](https://github.com/plesk/ext-website-virus-check/issues/21): Provide option to disable domain name resolving
