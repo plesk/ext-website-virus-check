@@ -281,7 +281,7 @@ class Modules_WebsiteVirusCheck_Helper
         if (!$module_id) {
             return;
         }
-        $reports = pm_Bootstrap::getDbAdapter()->fetchAssoc("select name, value from ModuleSettings where module_id = ${module_id} and name like 'domain_id_%'");
+        $reports = pm_Bootstrap::getDbAdapter()->fetchAssoc("select name, value from ModuleSettings where module_id = " . $module_id . " and name like 'domain_id_%'");
         //pm_Log::debug(print_r($reports, 1));
 
         foreach ($reports as $row) {
@@ -289,7 +289,7 @@ class Modules_WebsiteVirusCheck_Helper
             try {
                 $domain = new pm_Domain($report['domain']['id']);
             } catch (pm_Exception $e) {
-                pm_Bootstrap::getDbAdapter()->delete('ModuleSettings', "module_id = ${module_id} AND name = '{$row['name']}'");
+                pm_Bootstrap::getDbAdapter()->delete('ModuleSettings', "module_id = " . $module_id . " AND name = '{$row['name']}'");
             }
         }
     }

@@ -1,3 +1,7 @@
+# 1.4.2 (6 May 2024)
+
+* [-] The "PHP Deprecated Construction: Creation of dynamic property Modules_WebsiteVirusCheck_PleskDomain" error no longer appears in /var/log/plesk/panel.log in Plesk for Linux and in %plesk_dir%\admin\logs\php_error.log in Plesk for Windows. (EXTPLESK-5512)
+
 # 1.4.1 (17 February 2023)
 
 * [*] Internal improvements.

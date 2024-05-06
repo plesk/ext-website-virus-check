@@ -3,7 +3,24 @@
 
 class Modules_WebsiteVirusCheck_PleskDomain
 {
-    function __construct($id, $name, $ascii_name, $status, $dns_ip_address, $htype, $webspace_id) {
+    public $id;
+    public $name;
+    public $ascii_name;
+    public $status;
+    public $available;
+    public $dns_ip_address;
+    public $htype;
+    public $webspace_id;
+    public $enabled;
+    public $virustotal_positives;
+    public $virustotal_bad_urls_and_samples;
+    public $no_scanning_results;
+    public $virustotal_scan_date;
+    public $virustotal_total;
+    public $virustotal_domain_info_url;
+
+
+    public function __construct($id, $name, $ascii_name, $status, $dns_ip_address, $htype, $webspace_id) {
         $this->id = $id;
         $this->name = $name;
         $this->ascii_name = $ascii_name;
