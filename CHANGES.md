@@ -1,4 +1,4 @@
-# 1.4.3 (3 Oct 2025)
+# 1.4.3 (10 Nov 2025)
 
 * [*] Updated the extension to be fully compatible with PHP 8.4.
 
