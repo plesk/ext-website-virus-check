@@ -66,4 +66,5 @@ $messages = array(
     'emailNotificationEnabled' => 'Enable email notifications',
     'emailNotificationSubjectBadDomain' => 'VirusTotal.com reports "bad" domain %%domain%%',
     'emailNotificationBodyBadDomain' => 'VirusTotal.com reports domain %%domain%% as "bad" %%url%%',
+    'badRequest' => 'Bad request: method is not supported',
 );

@@ -5,8 +5,8 @@
   <description>Check your websites for viruses automatically using multiple anti-virus engines.</description>
   <description xml:lang="ru-RU">Автоматизируйте бесплатную проверку своих сайтов на вирусы.</description>
   <category>security</category>
-  <version>1.4.3</version>
-  <release>2</release>
+  <version>1.4.4</version>
+  <release>{{RELEASE}}</release>
   <vendor>Plesk</vendor>
   <url>https://github.com/plesk/ext-website-virus-check</url>
   <plesk_min_version>12.5.30</plesk_min_version>

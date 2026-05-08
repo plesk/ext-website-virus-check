@@ -1,3 +1,7 @@
+# 1.4.4 (unreleased)
+
+* [*] Security improvements.
+
 # 1.4.3 (10 Nov 2025)
 
 * [*] Updated the extension to be fully compatible with PHP 8.4.
