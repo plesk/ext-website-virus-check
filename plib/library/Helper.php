@@ -699,4 +699,9 @@ class Modules_WebsiteVirusCheck_Helper
     static function setDomainReport($domainId, $report) {
         pm_Settings::set('domain_id_' . $domainId, json_encode($report));
     }
+
+    public static function redirectPost(string $url): string
+    {
+        return 'javascript:Jsw.redirectPost("' . $url . '");';
+    }
 }

@@ -38,6 +38,16 @@ class IndexController extends pm_Controller_Action
         $this->_forward('report');
     }
 
+    /**
+     * @throws \pm_Exception
+     */
+    protected function ensurePostRequest(): void
+    {
+        if (!$this->_request->isPost()) {
+            throw new \pm_Exception(pm_Locale::lmsg('badRequest'));
+        }
+    }
+
     public function reportAction()
     {
         if (!pm_Settings::get('virustotal_enabled')) {
@@ -60,7 +70,9 @@ class IndexController extends pm_Controller_Action
                 'title' => $isRunning ? $this->lmsg('buttonStopScan') : $this->lmsg('buttonStartScan'),
                 'description' => $isRunning ? $this->lmsg('buttonStopDesc') : $this->lmsg('buttonStartDesc'),
                 'icon' => pm_Context::getBaseUrl() . "/images/{$action}.png",
-                'link' => $this->view->getHelper('baseUrl')->moduleUrl(['action' => $action]),
+                'link' => Modules_WebsiteVirusCheck_Helper::redirectPost(
+                    $this->view->getHelper('baseUrl')->moduleUrl(['action' => $action])
+                ),
             ];
             
         } else {
@@ -70,6 +82,8 @@ class IndexController extends pm_Controller_Action
 
     public function startAction()
     {
+        $this->ensurePostRequest();
+        
         $allDomains = Modules_WebsiteVirusCheck_Helper::getDomains();
         $selectedDomainIds = (array)$this->_getParam('ids');
         $selectedDomains = [];
@@ -97,6 +111,8 @@ class IndexController extends pm_Controller_Action
 
     public function stopAction()
     {
+        $this->ensurePostRequest();
+
         $taskManager = new pm_LongTask_Manager();
         $taskManager->cancelAllTasks();
 
@@ -338,6 +354,8 @@ class IndexController extends pm_Controller_Action
 
     public function enableAction()
     {
+        $this->ensurePostRequest();
+
         foreach ((array)$this->_getParam('ids') as $domainId) {
             $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
             if ($report) {
@@ -351,6 +369,8 @@ class IndexController extends pm_Controller_Action
 
     public function disableAction()
     {
+        $this->ensurePostRequest();
+
         foreach ((array)$this->_getParam('ids') as $domainId) {
             $report = json_decode(pm_Settings::get('domain_id_' . $domainId), true);
             if ($report) {
